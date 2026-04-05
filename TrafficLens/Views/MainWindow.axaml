@@ -1,0 +1,218 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TrafficLens.ViewModels"
+        x:Class="TrafficLens.Views.MainWindow"
+        Title="TrafficLens - TCP Proxy Inspector                     (programmed by Sönke Schmidt - It's Open Source! Visit: www.soenke-berlin.de )"
+        Width="1250" Height="700"
+        MinWidth="1120" MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        Background="#F0F0F5">
+
+    <Window.Styles>
+        <!-- ItemsControl items must stretch to full width -->
+        <Style Selector="ItemsControl > ContentPresenter">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        </Style>
+        <!-- Thicker, always-visible scrollbars -->
+        <Style Selector="ScrollBar[Orientation=Vertical]">
+            <Setter Property="Width" Value="12"/>
+        </Style>
+        <Style Selector="ScrollBar[Orientation=Horizontal]">
+            <Setter Property="Height" Value="12"/>
+        </Style>
+    </Window.Styles>
+
+    <!-- shared DataTemplate, reused by both traffic panels -->
+    <Window.Resources>
+        <DataTemplate x:Key="TrafficEntryTemplate" DataType="vm:TrafficEntryViewModel">
+            <Border Margin="0,0,0,2"
+                    BorderBrush="#E8E8E8" BorderThickness="0,0,0,1"
+                    Background="White"
+                    HorizontalAlignment="Stretch">
+                <StackPanel>
+                    <!-- header bar: DockPanel keeps the timestamp right-aligned even when space is tight.
+                         SelectableTextBlock so you can still copy the text despite the coloured background. -->
+                    <Border Background="{Binding HeaderBrush}" Padding="6,4">
+                        <DockPanel LastChildFill="True">
+                            <SelectableTextBlock DockPanel.Dock="Left"
+                                                 Text="{Binding Label}"
+                                                 FontWeight="Bold" Foreground="White"
+                                                 FontSize="11" VerticalAlignment="Center"
+                                                 Margin="0,0,8,0"
+                                                 SelectionBrush="#66FFFFFF"/>
+                            <SelectableTextBlock DockPanel.Dock="Right"
+                                                 Text="{Binding TimestampAndBytes}"
+                                                 Foreground="{Binding TimestampBrush}"
+                                                 FontSize="11" VerticalAlignment="Center"
+                                                 Margin="8,0,0,0"
+                                                 SelectionBrush="#66FFFFFF"/>
+                            <SelectableTextBlock Text="{Binding Endpoints}"
+                                                 Foreground="White" FontSize="11"
+                                                 VerticalAlignment="Center"
+                                                 TextTrimming="CharacterEllipsis"
+                                                 SelectionBrush="#66FFFFFF"/>
+                        </DockPanel>
+                    </Border>
+                    <!-- Payload body -->
+                    <SelectableTextBlock Text="{Binding Body}"
+                                         FontFamily="Consolas,Courier New,monospace"
+                                         FontSize="11"
+                                         Margin="6,4,6,4"
+                                         TextWrapping="NoWrap"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid RowDefinitions="Auto,*,28">
+
+        <!-- Row 0: settings panel -->
+        <Border Grid.Row="0"
+                Background="#EAEAF0"
+                BorderBrush="#D0D0D8" BorderThickness="0,0,0,1"
+                Padding="10,8">
+            <StackPanel Spacing="6">
+
+                <!-- Input row -->
+                <WrapPanel Orientation="Horizontal">
+                    <TextBlock Text="Target Host:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBox Text="{Binding TargetHost}"
+                             Width="200" Margin="0,0,12,0"
+                             IsEnabled="{Binding IsNotRunning}"/>
+
+                    <TextBlock Text="Port:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <NumericUpDown Value="{Binding TargetPort}"
+                                   Minimum="1" Maximum="65535" FormatString="0"
+                                   Width="130" Margin="0,0,16,0"
+                                   IsEnabled="{Binding IsNotRunning}"/>
+
+                    <TextBlock Text="Listen Port:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <NumericUpDown Value="{Binding ListenPort}"
+                                   Minimum="1" Maximum="65535" FormatString="0"
+                                   Width="130" Margin="0,0,16,0"
+                                   IsEnabled="{Binding IsNotRunning}"/>
+
+                    <CheckBox Content="Rewrite Host header"
+                              IsChecked="{Binding RewriteHostHeader}"
+                              IsEnabled="{Binding IsNotRunning}"
+                              VerticalAlignment="Center"
+                              Margin="0,0,16,0"/>
+
+                    <TextBlock Text="Listen on:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{Binding ListenModeOptions}"
+                              SelectedIndex="{Binding ListenModeIndex}"
+                              IsEnabled="{Binding IsNotRunning}"
+                              MinWidth="120"
+                              VerticalAlignment="Center"/>
+                </WrapPanel>
+
+                <!-- Button row -->
+                <DockPanel>
+                    <Button Content="▶  Start"
+                            Command="{Binding StartCommand}"
+                            IsEnabled="{Binding IsNotRunning}"
+                            Background="#28A745" Foreground="White"
+                            Padding="14,6" Margin="0,0,6,0" FontWeight="SemiBold"/>
+
+                    <Button Content="■  Stop"
+                            Command="{Binding StopCommand}"
+                            IsEnabled="{Binding IsRunning}"
+                            Background="#DC3545" Foreground="White"
+                            Padding="14,6" Margin="0,0,6,0" FontWeight="SemiBold"/>
+
+                    <Button Content="✕  Clear"
+                            Command="{Binding ClearCommand}"
+                            Background="#6C757D" Foreground="White"
+                            Padding="14,6" Margin="0,0,14,0" FontWeight="SemiBold"/>
+
+                    <Ellipse Width="12" Height="12"
+                             Fill="{Binding StatusBrush}"
+                             VerticalAlignment="Center"
+                             Margin="0,0,6,0"/>
+                    <TextBlock Text="{Binding StatusText}"
+                               VerticalAlignment="Center"
+                               Foreground="#333333"/>
+                </DockPanel>
+
+            </StackPanel>
+        </Border>
+
+        <!-- Row 1: side-by-side traffic panels -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,5,*" Margin="8,6,8,6">
+
+            <!-- Requests -->
+            <Border Grid.Column="0"
+                    BorderBrush="#C8CCE0" BorderThickness="1" CornerRadius="4"
+                    ClipToBounds="True">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top"
+                            Background="#E4EAF8"
+                            BorderBrush="#C8CCE0" BorderThickness="0,0,0,1"
+                            Padding="8,5">
+                        <TextBlock Text="Requests  (Client → Target)"
+                                   FontWeight="SemiBold" Foreground="#1E64C8"/>
+                    </Border>
+                    <ScrollViewer x:Name="RequestsScroll"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto"
+                                  AllowAutoHide="False"
+                                  Background="White">
+                        <ItemsControl x:Name="RequestsList"
+                                      ItemsSource="{Binding Requests}"
+                                      ItemTemplate="{StaticResource TrafficEntryTemplate}"
+                                      HorizontalAlignment="Stretch"/>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1"
+                          Background="#C8C8D0"
+                          ResizeDirection="Columns"/>
+
+            <!-- Responses -->
+            <Border Grid.Column="2"
+                    BorderBrush="#B8DCCA" BorderThickness="1" CornerRadius="4"
+                    ClipToBounds="True">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top"
+                            Background="#E4F5EC"
+                            BorderBrush="#B8DCCA" BorderThickness="0,0,0,1"
+                            Padding="8,5">
+                        <TextBlock Text="Responses  (Target → Client)"
+                                   FontWeight="SemiBold" Foreground="#14966E"/>
+                    </Border>
+                    <ScrollViewer x:Name="ResponsesScroll"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto"
+                                  AllowAutoHide="False"
+                                  Background="White">
+                        <ItemsControl x:Name="ResponsesList"
+                                      ItemsSource="{Binding Responses}"
+                                      ItemTemplate="{StaticResource TrafficEntryTemplate}"
+                                      HorizontalAlignment="Stretch"/>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+        </Grid>
+
+        <!-- Row 2: status bar -->
+        <Border Grid.Row="2"
+                Background="#E8E8F0"
+                BorderBrush="#D0D0D8" BorderThickness="0,1,0,0"
+                Padding="10,0">
+            <DockPanel VerticalAlignment="Center">
+                <TextBlock DockPanel.Dock="Right"
+                           Text="{Binding TotalCapturedText}"
+                           Foreground="#555555" Margin="16,0,0,0"/>
+                <TextBlock DockPanel.Dock="Right"
+                           Text="{Binding ActiveConnectionsText}"
+                           Foreground="#555555" Margin="16,0,0,0"/>
+                <TextBlock Text="{Binding StatusText}"
+                           Foreground="#333333"/>
+            </DockPanel>
+        </Border>
+
+    </Grid>
+</Window>
