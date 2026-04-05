@@ -157,7 +157,8 @@ In the following example, TrafficLens listens on port 8080 and forwards everythi
 ![](./assets/screenshot_1.png)
 
 It can not only be used between two services, but also by using your browser to access the (web) server (via TrafficLens). For example:
-<img src="./assets/screenshot_2.png" width="300" height="200">
+
+<img src="./assets/screenshot_2.png" width="400" height="300">
 
 ## License
 
