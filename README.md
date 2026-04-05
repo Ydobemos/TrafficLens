@@ -24,6 +24,22 @@ TrafficLens acts as a **transparent TCP man-in-the-middle proxy**. It listens on
                           live display in GUI
 ```
 
+## Releases and Downloads
+
+[Actual Stable Version is 1.0 (click me to go to Release Page)](https://github.com/Ydobemos/TrafficLens/releases/tag/v1.0)
+This is version 1.0, and there will probably be no further versions, as the project is pretty much complete for me.
+TrafficLens is available for download as a zip file for various operating systems (Windows, Linux, macOS) and architectures (x64, x86, arm, arm64).
+
+## Screenshot
+
+The program has a simple, intuitive, and minimalist design.
+In the following example, TrafficLens listens on port 8080 and forwards everything to localhost on port 80 (where a web server is running).
+![](./assets/screenshot_1.png)
+
+It can not only be used between two services, but also by using your browser to access the (web) server (via TrafficLens). For example:
+
+<img src="./assets/screenshot_2.png" width="400" height="300">
+
 ## Features
 
 - **Two traffic panels** — Requests (client → server) and Responses (server → client) displayed side by side with colour-coded headers
@@ -150,15 +166,6 @@ TrafficLens/
         ├── MainWindowViewModel.cs     # Proxy orchestration, commands, state
         └── TrafficEntryViewModel.cs   # Display model for one traffic entry
 ```
-
-## Screenshot
-The program has a simple, intuitive, and minimalist design.
-In the following example, TrafficLens listens on port 8080 and forwards everything to localhost on port 80 (where a web server is running).
-![](./assets/screenshot_1.png)
-
-It can not only be used between two services, but also by using your browser to access the (web) server (via TrafficLens). For example:
-
-<img src="./assets/screenshot_2.png" width="400" height="300">
 
 ## License
 
