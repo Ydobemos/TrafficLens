@@ -26,11 +26,11 @@ TrafficLens acts as a **transparent TCP man-in-the-middle proxy**. It listens on
 
 ## Releases and Downloads
 
-[Actual Stable Version is 1.0 (click me to go to Release Page)](https://github.com/Ydobemos/TrafficLens/releases/tag/v1.0) <br>
+[Actual Stable Version is 1.0 (click here to go to Release Page)](https://github.com/Ydobemos/TrafficLens/releases/tag/v1.0) <br>
 This is version 1.0, and there will probably be no further versions, as the project is pretty much complete for me.
 TrafficLens is available for download as a zip file for various operating systems (Windows, Linux, macOS) and architectures (x64, x86, arm, arm64).
 
-## Screenshot
+## Screenshots
 
 The program has a simple, intuitive, and minimalist design.
 In the following example, TrafficLens listens on port 8080 and forwards everything to localhost on port 80 (where a web server is running).
